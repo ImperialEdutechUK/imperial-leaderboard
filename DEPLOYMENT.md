@@ -50,9 +50,9 @@ Open the **API service → Variables** and add:
 | `CORS_ORIGINS` | `https://your-app.vercel.app` | Fill in properly at step 3 |
 | `PUBLIC_SITE_URL` | `https://your-app.vercel.app` | |
 | `NODE_ENV` | `production` | |
-| `SEED_ADMIN_EMAIL` | `sadeev@imperiallearning.co.uk` | |
+| `SEED_ADMIN_EMAIL` | `seed admin email need to add ` | |
 | `SEED_ADMIN_PASSWORD` | *(a strong temporary password)* | Changed on first sign-in |
-| `SEED_ADMIN_NAME` | `Sadeev Silva` | |
+| `SEED_ADMIN_NAME` | `enter admin name ` | |
 | `SEED_SAMPLE_WEEK` | `true` | `false` to start with no data |
 | `MAX_UPLOAD_MB` | `15` | |
 
