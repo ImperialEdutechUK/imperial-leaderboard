@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Design tokens.
+
+  Colours come from the validated dark categorical palette, checked against this
+  app's surface (#15161C) for lightness band, chroma floor, colour-blind
+  separation, normal-vision separation and 3:1 contrast. Do not substitute hues
+  here without re-running that validation — the slot ORDER is the colour-blind
+  safety mechanism, not decoration.
+*/
+:root {
+  color-scheme: dark;
+
+  --surface-1: #15161c;
+  --plane: #0b0c10;
+  --text-primary: #ffffff;
+  --text-secondary: #c7c9d4;
+  --text-muted: #8b8f9e;
+  --gridline: #24262f;
+  --baseline: #383a44;
+
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+
+  --good: #0ca30c;
+  --warning: #fab219;
+  --critical: #d03b3b;
+
+  --gold: #f4b740;
+  --silver: #c0c7d1;
+  --bronze: #cd7f45;
+}
+
+html,
+body {
+  background: var(--plane);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background-image:
+    radial-gradient(900px 500px at 12% -8%, rgba(57, 135, 229, 0.1), transparent 60%),
+    radial-gradient(760px 420px at 92% -12%, rgba(144, 133, 233, 0.09), transparent 60%);
+  background-attachment: fixed;
+}
+
+/* Columns of numbers must line up; standalone hero figures should not. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: rgba(57, 135, 229, 0.35);
+}
+
+/* Scrollbars */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: #2b2e3a;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #3a3e4d;
+  background-clip: content-box;
+}
+
+/* Visible keyboard focus everywhere. */
+:focus-visible {
+  outline: 2px solid var(--series-1);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-card border border-hairline bg-surface shadow-card;
+  }
+  .card-raised {
+    @apply rounded-card border border-hairline bg-raised shadow-card;
+  }
+  .label {
+    @apply text-[11px] font-semibold uppercase tracking-[0.09em] text-ink-3;
+  }
+  .skeleton {
+    @apply rounded-md bg-[linear-gradient(90deg,#1C1E26_0px,#262935_120px,#1C1E26_240px)] bg-[length:400px_100%] animate-shimmer;
+  }
+}

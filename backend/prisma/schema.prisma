@@ -1,0 +1,381 @@
+// ─────────────────────────────────────────────────────────────────────────────
+//  Imperial Learning — Productivity Leaderboard
+//  Prisma schema (PostgreSQL)
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN // company-wide: sees & manages every department
+  MANAGER // scoped to a single department
+}
+
+enum WeekStatus {
+  DRAFT // imported, visible to managers only
+  PUBLISHED // live on the public leaderboard
+  ARCHIVED // hidden from default views, kept for history
+}
+
+enum SourceType {
+  PDF
+  CSV
+  XLSX
+  MANUAL
+  API
+}
+
+enum PeriodType {
+  WEEK
+  MONTH
+  QUARTER
+  YEAR
+  CUSTOM
+}
+
+enum BadgeTier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+// ── Core org structure ───────────────────────────────────────────────────────
+
+model Department {
+  id                String   @id @default(cuid())
+  name              String   @unique
+  slug              String   @unique
+  /// Short code as it appears in Screenshot Monitor names, e.g. "CDD" in "Aaisha (CDD)".
+  /// Used to auto-route an uploaded report to the right department.
+  code              String?  @unique
+  colour            String   @default("#6366F1")
+  accent            String   @default("#8B5CF6")
+  icon              String   @default("Sparkles")
+  /// Expected billable hours per employee per week. Drives the hours component of the score.
+  weeklyTargetHours Float    @default(35)
+  isActive          Boolean  @default(true)
+  sortOrder         Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  employees Employee[]
+  users     User[]
+  weeks     Week[]
+  setting   ScoringSetting?
+  prizes    Prize[]
+
+  @@index([isActive, sortOrder])
+}
+
+/// Managers and admins. Employees do NOT have accounts — the leaderboard is public.
+model User {
+  id                 String    @id @default(cuid())
+  email              String    @unique
+  name               String
+  passwordHash       String
+  role               Role      @default(MANAGER)
+  departmentId       String?
+  isActive           Boolean   @default(true)
+  mustChangePassword Boolean   @default(true)
+  lastLoginAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  uploadedWeeks Week[]     @relation("WeekUploader")
+  auditLogs    AuditLog[]
+
+  @@index([departmentId])
+}
+
+model Employee {
+  id                     String    @id @default(cuid())
+  /// Canonical name shown on the leaderboard, e.g. "Fathima Rukaiya".
+  fullName               String
+  /// Short label for tight spaces, e.g. "Fathima R."
+  displayName            String
+  slug                   String    @unique
+  departmentId           String
+  jobTitle               String?
+  avatarColour           String    @default("#6366F1")
+  /// True for department managers (e.g. Sadeev). Combine with excludeFromLeaderboard
+  /// if you would rather managers were not ranked against their own team.
+  isManager              Boolean   @default(false)
+  /// When true the employee is still imported and tracked, but never ranked or shown publicly.
+  excludeFromLeaderboard Boolean   @default(false)
+  isActive               Boolean   @default(true)
+  startedAt              DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  department Department      @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  aliases    EmployeeAlias[]
+  stats      WeekStat[]
+  badges     BadgeAward[]
+  prizes     Prize[]
+
+  @@unique([departmentId, fullName])
+  @@index([departmentId, isActive])
+}
+
+/// Every spelling of a person's name that has ever appeared in a report.
+/// Lets "Sadeev (CDD)", "Sadeev", and "Sadeev Silva" all resolve to one person.
+model EmployeeAlias {
+  id         String   @id @default(cuid())
+  employeeId String
+  /// Exactly as it appeared in the source file.
+  raw        String
+  /// Lowercased, punctuation-stripped, department-suffix-removed. Used for lookup.
+  normalized String
+  createdAt  DateTime @default(now())
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, normalized])
+  @@index([normalized])
+}
+
+// ── Weekly data ──────────────────────────────────────────────────────────────
+
+model Week {
+  id           String     @id @default(cuid())
+  departmentId String
+  /// Monday of the reporting week (date only, no timezone drift).
+  startDate    DateTime   @db.Date
+  /// Sunday of the reporting week.
+  endDate      DateTime   @db.Date
+  isoYear      Int
+  isoWeek      Int
+  /// Human label, e.g. "6 – 12 Apr 2026".
+  label        String
+  status       WeekStatus @default(DRAFT)
+  publishedAt  DateTime?
+
+  sourceType SourceType
+  sourceFile String?
+
+  /// Overrides the department target for this week only. Essential for weeks
+  /// containing a bank holiday — e.g. the week of 6 Apr 2026 began on Easter
+  /// Monday, so a full 35h target would have penalised the entire department.
+  targetHoursOverride Float?
+  /// Shown next to the week on the public page, e.g. "Easter Monday — 4-day week".
+  note                String?
+
+  /// Totals as printed on the source report — used to validate our own parse.
+  reportTotalSeconds Int?
+  reportAvgActivity  Float?
+  /// Non-fatal parse notes, e.g. "total differs from printed total by 2m".
+  parseWarnings      Json?
+
+  /// Snapshot of the scoring config actually used, so historic weeks never
+  /// change retroactively when settings are edited.
+  scoringSnapshot Json?
+
+  uploadedById String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  uploadedBy User?      @relation("WeekUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+  stats      WeekStat[]
+  dayTotals  DayTotal[]
+  badges     BadgeAward[]
+
+  @@unique([departmentId, startDate])
+  @@index([departmentId, status, startDate])
+  @@index([status, startDate])
+}
+
+/// Optional per-day totals lifted from the report's timeline chart.
+/// Best-effort only: never required, never used for scoring.
+model DayTotal {
+  id      String   @id @default(cuid())
+  weekId  String
+  date    DateTime @db.Date
+  seconds Int
+
+  week Week @relation(fields: [weekId], references: [id], onDelete: Cascade)
+
+  @@unique([weekId, date])
+}
+
+model WeekStat {
+  id         String @id @default(cuid())
+  weekId     String
+  employeeId String
+
+  /// The name string exactly as it appeared in the uploaded file.
+  rawName     String
+  seconds     Int
+  /// 0–100, as reported by Screenshot Monitor.
+  activityPct Float
+
+  // Score breakdown — every component stored so the UI can show its working.
+  hoursScore    Float // 0..1 (capped)
+  activityScore Float // 0..1
+  basePoints    Float
+  bonusPoints   Float @default(0)
+  /// Final leaderboard points. basePoints + bonusPoints.
+  points        Float
+
+  rank         Int
+  previousRank Int?
+  /// Positive = moved up the table.
+  rankDelta    Int?
+
+  isPersonalBest Boolean @default(false)
+  /// Number of days in the week with recorded time, when the source provides it.
+  daysWorked     Int?
+  /// e.g. [{ "type": "LOW_HOURS", "message": "..." }] — surfaced to managers only.
+  flags          Json?
+  /// Itemised bonus list for the "how was this calculated" panel.
+  bonusBreakdown Json?
+
+  createdAt DateTime @default(now())
+
+  week     Week     @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([weekId, employeeId])
+  @@index([employeeId])
+  @@index([weekId, rank])
+}
+
+// ── Scoring configuration ────────────────────────────────────────────────────
+
+/// One row per department, plus one global row (departmentId = null) used as
+/// the fallback for departments that have not customised their scoring.
+model ScoringSetting {
+  id           String  @id @default(cuid())
+  departmentId String? @unique
+
+  /// Weights must sum to 1. Enforced in the API layer.
+  hoursWeight    Float @default(0.5)
+  activityWeight Float @default(0.5)
+
+  /// Target hours per week. Overrides Department.weeklyTargetHours when set.
+  targetHours Float @default(35)
+  /// Hours score is capped at this multiple of target, so 60-hour weeks
+  /// cannot buy the top spot. 1.1 = credit up to 110% of target.
+  hoursCap    Float @default(1.1)
+
+  /// Total points available from the base score.
+  maxPoints Int @default(1000)
+
+  // Bonus points — set any to 0 to switch that bonus off.
+  bonusPersonalBest    Float @default(25)
+  bonusTargetMet       Float @default(20)
+  bonusHighActivity    Float @default(25)
+  /// Activity % at or above which bonusHighActivity is granted.
+  highActivityThreshold Float @default(85)
+
+  /// Anyone below this many hours is imported but shown as "not qualified"
+  /// rather than ranked last — protects part-timers and people on leave.
+  minHoursToQualify Float @default(8)
+
+  /// Flag activity readings at or above this for manager review.
+  /// 100% sustained activity is unusual and worth a human look.
+  integrityFlagActivity Float @default(99)
+
+  updatedAt DateTime @updatedAt
+
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+}
+
+// ── Gamification ─────────────────────────────────────────────────────────────
+
+model BadgeDefinition {
+  id          String    @id @default(cuid())
+  key         String    @unique
+  name        String
+  description String
+  /// Lucide icon name rendered by the frontend.
+  icon        String
+  tier        BadgeTier @default(BRONZE)
+  colour      String    @default("#F59E0B")
+  /// Declarative rule evaluated by services/badges.ts. See BADGE_RULES in that file.
+  rule        Json
+  isActive    Boolean   @default(true)
+  sortOrder   Int       @default(0)
+
+  awards BadgeAward[]
+}
+
+model BadgeAward {
+  id         String   @id @default(cuid())
+  employeeId String
+  badgeId    String
+  /// The week that earned it. Null for lifetime/cumulative badges.
+  weekId     String?
+  awardedAt  DateTime @default(now())
+  /// e.g. { "activityPct": 100 } — lets the UI say *why* it was awarded.
+  context    Json?
+
+  employee Employee        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  badge    BadgeDefinition @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  week     Week?           @relation(fields: [weekId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, badgeId, weekId])
+  @@index([employeeId])
+}
+
+/// Monthly/quarterly champions and any ad-hoc prize you want to record.
+/// Champions can be auto-computed then confirmed, or set manually by a manager.
+model Prize {
+  id           String     @id @default(cuid())
+  departmentId String?
+  periodType   PeriodType @default(MONTH)
+  /// "2026-04" for months, "2026-Q2" for quarters, "2026-W15" for weeks.
+  periodKey    String
+  title        String
+  description  String?
+  /// Free text, e.g. "£50 Amazon voucher".
+  reward       String?
+  employeeId   String?
+  /// Points total over the period at the time of awarding.
+  pointsTotal  Float?
+  isAutomatic  Boolean    @default(true)
+  awardedAt    DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  employee   Employee?   @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+
+  @@unique([departmentId, periodType, periodKey, title])
+  @@index([periodType, periodKey])
+}
+
+// ── Misc ─────────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  meta      Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([entity, entityId])
+}
+
+/// Simple key/value store for site-wide settings (site title, hero copy, etc.).
+model AppSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
