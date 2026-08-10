@@ -11,6 +11,7 @@ import { useAuth } from '@/lib/auth';
 import { SITE_NAME } from '@/lib/api';
 import { Spinner } from '@/components/ui';
 import { cx } from '@/lib/format';
+import { ThemeToggle } from '@/lib/theme';
 
 interface NavItem {
   href: string;
@@ -79,7 +80,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               href={n.href}
               className={cx(
                 'flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] font-semibold transition-colors',
-                active ? 'bg-s1/15 text-ink' : 'text-ink-3 hover:bg-white/[0.04] hover:text-ink-2',
+                active ? 'bg-s1/15 text-ink' : 'text-ink-3 hover:bg-ink/[0.04] hover:text-ink-2',
               )}
             >
               <n.icon size={16} />
@@ -90,7 +91,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
 
       <div className="border-t border-hairline p-3">
-        <Link href="/admin/account" className="block rounded-lg px-2 py-1.5 hover:bg-white/[0.04]">
+        <Link href="/admin/account" className="block rounded-lg px-2 py-1.5 hover:bg-ink/[0.04]">
           <div className="truncate text-[13px] font-semibold text-ink">{user.name}</div>
           <div className="truncate text-[11px] text-ink-3">
             {user.role === 'ADMIN' ? 'Administrator' : user.department?.name ?? 'Manager'}
@@ -98,10 +99,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </Link>
         <button
           onClick={signOut}
-          className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[12.5px] font-semibold text-ink-3 hover:bg-white/[0.04] hover:text-ink-2"
+          className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[12.5px] font-semibold text-ink-3 hover:bg-ink/[0.04] hover:text-ink-2"
         >
           <LogOut size={14} /> Sign out
         </button>
+        <div className="mt-1 flex items-center justify-between rounded-lg px-2 py-1.5">
+          <span className="text-[12.5px] font-semibold text-ink-3">Appearance</span>
+          <ThemeToggle />
+        </div>
       </div>
     </nav>
   );

@@ -5,18 +5,22 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Surfaces — the arena. Deep, neutral, slightly cool.
-        plane: '#0B0C10',
-        surface: '#15161C',
-        raised: '#1C1E26',
-        overlay: '#242732',
-        hairline: 'rgba(255,255,255,0.08)',
-        rule: 'rgba(255,255,255,0.14)',
+        // Surfaces — the arena. Theme-aware via CSS variables (see globals.css).
+        // `<alpha-value>` tokens need the rgb-triplet form so opacity modifiers
+        // (e.g. bg-plane/85) keep working across themes.
+        plane: 'rgb(var(--plane-rgb) / <alpha-value>)',
+        surface: 'var(--surface)',
+        raised: 'var(--raised)',
+        overlay: 'var(--overlay)',
+        hairline: 'var(--hairline)',
+        'hairline-strong': 'var(--hairline-strong)',
+        'hairline-mid': 'var(--hairline-mid)',
+        rule: 'var(--rule)',
 
         // Ink
-        ink: '#FFFFFF',
-        'ink-2': '#C7C9D4',
-        'ink-3': '#8B8F9E',
+        ink: 'rgb(var(--ink-rgb) / <alpha-value>)',
+        'ink-2': 'var(--ink-2)',
+        'ink-3': 'rgb(var(--ink-3-rgb) / <alpha-value>)',
 
         // Validated categorical slots (dark steps, checked against #15161C).
         s1: '#3987E5',

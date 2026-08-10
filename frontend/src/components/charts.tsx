@@ -16,10 +16,10 @@
 import { useId, useMemo, useState } from 'react';
 import { cx, formatDuration, formatPoints, shortDate, weekdayOf } from '@/lib/format';
 
-const SURFACE = '#15161C';
-const GRID = '#24262F';
-const BASELINE = '#383A44';
-const MUTED = '#8B8F9E';
+const SURFACE = 'var(--surface)';
+const GRID = 'var(--gridline)';
+const BASELINE = 'var(--baseline)';
+const MUTED = 'rgb(var(--ink-3-rgb))';
 const SERIES = '#3987E5';
 
 function Tooltip({ left, top, lines }: { left: string; top: number; lines: string[] }) {
@@ -91,7 +91,7 @@ export function DayStrip({
             >
               {isZero ? (
                 // A genuine zero gets a visible baseline tick, not an invisible bar.
-                <div className="h-[3px] w-full max-w-[56px] rounded-full bg-white/15" />
+                <div className="h-[3px] w-full max-w-[56px] rounded-full bg-ink/15" />
               ) : (
                 <div
                   className="w-full max-w-[56px] rounded-t-[4px] transition-all duration-500"
@@ -138,7 +138,7 @@ export function DayStrip({
           </thead>
           <tbody className="text-ink-2">
             {days.map((d) => (
-              <tr key={d.date} className="border-b border-hairline/50">
+              <tr key={d.date} className="border-b border-hairline-mid">
                 <td className="py-1.5">{`${weekdayOf(d.date)} ${shortDate(d.date)}`}</td>
                 <td className="py-1.5 text-right tnum">{d.seconds === 0 ? '—' : d.label}</td>
               </tr>
@@ -308,7 +308,7 @@ export function PointsChart({
           </thead>
           <tbody className="text-ink-2">
             {points.map((p, i) => (
-              <tr key={i} className="border-b border-hairline/50">
+              <tr key={i} className="border-b border-hairline-mid">
                 <td className="py-1.5">{p.label}</td>
                 <td className="py-1.5 text-right tnum">{formatPoints(p.value)}</td>
                 {points.some((x) => x.rank) && <td className="py-1.5 text-right tnum">{p.rank ?? '—'}</td>}
@@ -377,7 +377,7 @@ export function RankedBars({
                 {unit && <span className="ml-0.5 text-[11px] font-medium text-ink-3">{unit}</span>}
               </span>
             </div>
-            <div className="h-[7px] w-full overflow-hidden rounded-full bg-white/[0.06]">
+            <div className="h-[7px] w-full overflow-hidden rounded-full bg-ink/[0.06]">
               <div
                 className="h-full rounded-full transition-all duration-500"
                 style={{

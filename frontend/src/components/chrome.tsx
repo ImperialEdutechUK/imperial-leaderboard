@@ -7,6 +7,7 @@ import { Building2, LogIn, Menu, Trophy, X } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { SITE_NAME } from '@/lib/api';
 import { cx } from '@/lib/format';
+import { ThemeToggle } from '@/lib/theme';
 
 const NAV = [
   { href: '/', label: 'Departments' },
@@ -44,7 +45,7 @@ export function SiteHeader() {
                 href={n.href}
                 className={cx(
                   'rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-colors',
-                  active ? 'bg-white/[0.07] text-ink' : 'text-ink-3 hover:text-ink',
+                  active ? 'bg-ink/[0.07] text-ink' : 'text-ink-3 hover:text-ink',
                 )}
               >
                 {n.label}
@@ -53,15 +54,17 @@ export function SiteHeader() {
           })}
           <Link
             href={user ? '/admin' : '/login'}
-            className="ml-2 inline-flex items-center gap-1.5 rounded-lg border border-rule px-3 py-1.5 text-[13px] font-semibold text-ink-2 transition-colors hover:bg-white/5 hover:text-ink"
+            className="ml-2 inline-flex items-center gap-1.5 rounded-lg border border-rule px-3 py-1.5 text-[13px] font-semibold text-ink-2 transition-colors hover:bg-ink/5 hover:text-ink"
           >
             {user ? <Building2 size={14} /> : <LogIn size={14} />}
             {user ? 'Manager console' : 'Manager sign-in'}
           </Link>
+          <ThemeToggle className="ml-1 inline-flex items-center justify-center rounded-lg border border-rule p-2 text-ink-2 transition-colors hover:bg-ink/5 hover:text-ink" />
         </nav>
 
+        <ThemeToggle className="ml-auto rounded-lg p-2 text-ink-2 md:hidden" />
         <button
-          className="ml-auto rounded-lg p-2 text-ink-2 md:hidden"
+          className="rounded-lg p-2 text-ink-2 md:hidden"
           onClick={() => setOpen((o) => !o)}
           aria-label={open ? 'Close menu' : 'Open menu'}
           aria-expanded={open}
@@ -77,7 +80,7 @@ export function SiteHeader() {
               key={n.href}
               href={n.href}
               onClick={() => setOpen(false)}
-              className="block rounded-lg px-3 py-2.5 text-[14px] font-semibold text-ink-2 hover:bg-white/5 hover:text-ink"
+              className="block rounded-lg px-3 py-2.5 text-[14px] font-semibold text-ink-2 hover:bg-ink/5 hover:text-ink"
             >
               {n.label}
             </Link>

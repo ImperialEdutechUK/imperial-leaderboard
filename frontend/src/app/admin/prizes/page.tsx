@@ -128,7 +128,7 @@ export default function PrizesPage() {
                 {standings.map((s: any) => (
                   <tr
                     key={s.employee.id}
-                    className={`cursor-pointer border-b border-hairline/60 last:border-0 hover:bg-white/[0.03] ${
+                    className={`cursor-pointer border-b border-hairline-strong last:border-0 hover:bg-ink/[0.03] ${
                       winner === s.employee.id ? 'bg-gold/[0.07]' : ''
                     }`}
                     onClick={() => setWinner(s.employee.id)}

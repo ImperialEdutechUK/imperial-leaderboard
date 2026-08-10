@@ -165,7 +165,7 @@ export default function ProfilePage() {
               </thead>
               <tbody>
                 {[...data.history].reverse().map((h: any) => (
-                  <tr key={h.startDate} className="border-b border-hairline/60 last:border-0">
+                  <tr key={h.startDate} className="border-b border-hairline-strong last:border-0">
                     <td className="px-5 py-2.5 text-ink-2">{h.weekLabel}</td>
                     <td className="px-2 py-2.5">
                       <span className="flex items-center gap-2">

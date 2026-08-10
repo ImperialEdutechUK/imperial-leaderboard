@@ -35,7 +35,7 @@ export default function BadgesPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <div className="mb-8">
-        <div className="inline-flex items-center gap-2 rounded-pill border border-rule bg-white/[0.03] px-3 py-1 text-[11px] font-semibold text-ink-2">
+        <div className="inline-flex items-center gap-2 rounded-pill border border-rule bg-ink/[0.03] px-3 py-1 text-[11px] font-semibold text-ink-2">
           <Sparkles size={12} className="text-gold" /> Every badge you can earn
         </div>
         <h1 className="mt-3 text-[28px] font-black leading-tight tracking-tight text-ink">Badges</h1>

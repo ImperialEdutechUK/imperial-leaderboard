@@ -109,7 +109,7 @@ export default function RosterPage() {
         <Card className="overflow-hidden">
           <ul>
             {list.map((e: any) => (
-              <li key={e.id} className="border-b border-hairline/60 last:border-0">
+              <li key={e.id} className="border-b border-hairline-strong last:border-0">
                 <div className={cx('flex flex-wrap items-center gap-3 px-4 py-3', !e.isActive && 'opacity-50')}>
                   <Avatar name={e.fullName} colour={e.colour} size={34} />
                   <div className="min-w-0 flex-1">
@@ -263,7 +263,7 @@ export default function RosterPage() {
                 {editing.aliases.map((a: any) => (
                   <span
                     key={a.id}
-                    className="inline-flex items-center gap-1.5 rounded-pill border border-rule bg-white/[0.03] px-2.5 py-1 text-[12px] text-ink-2"
+                    className="inline-flex items-center gap-1.5 rounded-pill border border-rule bg-ink/[0.03] px-2.5 py-1 text-[12px] text-ink-2"
                   >
                     {a.raw}
                     <button
