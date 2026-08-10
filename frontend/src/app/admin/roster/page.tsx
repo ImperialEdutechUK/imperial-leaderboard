@@ -226,7 +226,9 @@ export default function RosterPage() {
 
             <div className="space-y-2.5">
               {[
+                /*
                 { key: 'isManager', label: 'This person is a manager', hint: 'Shows a manager tag on the leaderboard.' },
+                */
                 {
                   key: 'excludeFromLeaderboard',
                   label: 'Hide from the leaderboard',
