@@ -45,7 +45,7 @@ export function SiteHeader() {
                 href={n.href}
                 className={cx(
                   'rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-colors',
-                  active ? 'bg-ink/[0.07] text-ink' : 'text-ink-3 hover:text-ink',
+                  active ? 'bg-[#5C5CFF] text-ink' : 'text-ink-3 hover:text-ink',
                 )}
               >
                 {n.label}
@@ -80,7 +80,7 @@ export function SiteHeader() {
               key={n.href}
               href={n.href}
               onClick={() => setOpen(false)}
-              className="block rounded-lg px-3 py-2.5 text-[14px] font-semibold text-ink-2 hover:bg-ink/5 hover:text-ink"
+              className="block rounded-lg px-3 py-2.5 text-[14px] font-semibold text-ink-2 hover:bg-[#5C5CFF] hover:text-ink"
             >
               {n.label}
             </Link>
