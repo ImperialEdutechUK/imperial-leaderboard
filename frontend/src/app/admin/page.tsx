@@ -69,7 +69,7 @@ export default function AdminDashboard() {
               <Link
                 key={d.id}
                 href={`/admin/weeks/${d.id}`}
-                className="rounded-lg border border-rule px-2.5 py-1 text-[12px] font-semibold text-ink hover:bg-white/5"
+                className="rounded-lg border border-rule px-2.5 py-1 text-[12px] font-semibold text-ink hover:bg-ink/5"
               >
                 {d.department.name} · {d.label}
               </Link>
@@ -138,8 +138,8 @@ export default function AdminDashboard() {
           ) : (
             <ul>
               {list.map((w: any) => (
-                <li key={w.id} className="border-b border-hairline/60 last:border-0">
-                  <Link href={`/admin/weeks/${w.id}`} className="flex items-center gap-3 px-5 py-3 hover:bg-white/[0.025]">
+                <li key={w.id} className="border-b border-hairline-strong last:border-0">
+                  <Link href={`/admin/weeks/${w.id}`} className="flex items-center gap-3 px-5 py-3 hover:bg-ink/[0.025]">
                     <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: w.department.colour }} aria-hidden />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[13.5px] font-semibold text-ink">{w.label}</div>
@@ -177,7 +177,7 @@ export default function AdminDashboard() {
               <Link
                 key={a.href}
                 href={a.href}
-                className="flex items-center gap-3 rounded-xl border border-hairline p-3 transition-colors hover:border-rule hover:bg-white/[0.03]"
+                className="flex items-center gap-3 rounded-xl border border-hairline p-3 transition-colors hover:border-rule hover:bg-ink/[0.03]"
               >
                 <a.icon size={16} className="shrink-0 text-s1" />
                 <div className="min-w-0">

@@ -26,8 +26,8 @@ export const Button = forwardRef<
   }[size];
   const variants: Record<Variant, string> = {
     primary: 'bg-s1 text-white hover:brightness-110 active:brightness-95 shadow-[0_2px_12px_-4px_rgba(57,135,229,0.6)]',
-    secondary: 'bg-overlay text-ink border border-rule hover:bg-[#2c303c]',
-    ghost: 'text-ink-2 hover:text-ink hover:bg-white/5',
+    secondary: 'bg-overlay text-ink border border-rule hover:bg-[var(--surface-hover)]',
+    ghost: 'text-ink-2 hover:text-ink hover:bg-ink/5',
     danger: 'bg-critical text-white hover:brightness-110',
     gold: 'bg-gold text-[#1a1400] hover:brightness-105 shadow-[0_2px_16px_-4px_rgba(244,183,64,0.6)]',
   };
@@ -207,8 +207,8 @@ export function Pill({
       )}
       style={
         colour
-          ? { borderColor: `${colour}55`, background: `${colour}18`, color: '#fff' }
-          : { borderColor: 'rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.04)', color: '#C7C9D4' }
+          ? { borderColor: `${colour}55`, background: `${colour}18`, color: 'rgb(var(--ink-rgb))' }
+          : { borderColor: 'var(--rule)', background: 'rgb(var(--ink-rgb) / 0.04)', color: 'var(--ink-2)' }
       }
     >
       {children}

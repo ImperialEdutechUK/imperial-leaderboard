@@ -59,9 +59,9 @@ export default function UsersPage() {
       <Card className="overflow-hidden">
         <ul>
           {(users.data?.users ?? []).map((u: any) => (
-            <li key={u.id} className="border-b border-hairline/60 last:border-0">
+            <li key={u.id} className="border-b border-hairline-strong last:border-0">
               <div className={`flex flex-wrap items-center gap-3 px-4 py-3.5 ${!u.isActive ? 'opacity-50' : ''}`}>
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.05] text-ink-2">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-ink/[0.05] text-ink-2">
                   <UserCog size={16} />
                 </span>
                 <div className="min-w-0 flex-1">

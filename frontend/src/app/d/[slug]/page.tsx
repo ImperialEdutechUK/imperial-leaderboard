@@ -99,7 +99,7 @@ export default function DepartmentPage() {
           <div className="flex items-center gap-2">
             <Link
               href={`/d/${params.slug}/monthly`}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-rule px-3 py-2 text-[13px] font-semibold text-ink-2 hover:bg-white/5 hover:text-ink"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-rule px-3 py-2 text-[13px] font-semibold text-ink-2 hover:bg-ink/5 hover:text-ink"
             >
               <Trophy size={14} /> Monthly race
             </Link>
@@ -108,7 +108,7 @@ export default function DepartmentPage() {
               <button
                 onClick={() => weekIndex < weeks.length - 1 && go(weeks[weekIndex + 1].startDate)}
                 disabled={weekIndex >= weeks.length - 1}
-                className="rounded-lg border border-rule p-2 text-ink-2 disabled:opacity-35 hover:bg-white/5"
+                className="rounded-lg border border-rule p-2 text-ink-2 disabled:opacity-35 hover:bg-ink/5"
                 aria-label="Previous week"
               >
                 <ChevronLeft size={15} />
@@ -128,7 +128,7 @@ export default function DepartmentPage() {
               <button
                 onClick={() => weekIndex > 0 && go(weeks[weekIndex - 1].startDate)}
                 disabled={weekIndex <= 0}
-                className="rounded-lg border border-rule p-2 text-ink-2 disabled:opacity-35 hover:bg-white/5"
+                className="rounded-lg border border-rule p-2 text-ink-2 disabled:opacity-35 hover:bg-ink/5"
                 aria-label="Next week"
               >
                 <ChevronRight size={15} />

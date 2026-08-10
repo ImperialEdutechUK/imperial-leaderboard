@@ -265,7 +265,7 @@ export function LeaderboardTable({
               <li
                 key={row.employee.id}
                 className={cx(
-                  'group border-b border-hairline/60 transition-colors last:border-0 hover:bg-white/[0.025]',
+                  'group border-b border-hairline-strong transition-colors last:border-0 hover:bg-ink/[0.025]',
                   !row.qualified && 'opacity-60',
                 )}
               >

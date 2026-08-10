@@ -158,7 +158,7 @@ export default function MonthlyPage() {
               </thead>
               <tbody>
                 {standings.map((s: any) => (
-                  <tr key={s.employee.id} className="border-b border-hairline/60 last:border-0 hover:bg-white/[0.025]">
+                  <tr key={s.employee.id} className="border-b border-hairline-strong last:border-0 hover:bg-ink/[0.025]">
                     <td className="px-4 py-2.5">
                       <RankBadge rank={s.rank} size={28} />
                     </td>

@@ -34,7 +34,7 @@ export default function HomePage() {
     <div className="mx-auto max-w-6xl px-4 py-10">
       {/* Hero */}
       <section className="mb-10">
-        <div className="inline-flex items-center gap-2 rounded-pill border border-rule bg-white/[0.03] px-3 py-1 text-[11px] font-semibold text-ink-2">
+        <div className="inline-flex items-center gap-2 rounded-pill border border-rule bg-ink/[0.03] px-3 py-1 text-[11px] font-semibold text-ink-2">
           <Sparkles size={12} className="text-gold" />
           {summary.data?.latestWeek ? `Latest week: ${summary.data.latestWeek.label}` : 'Weekly productivity rankings'}
         </div>
@@ -156,7 +156,7 @@ export default function HomePage() {
                   {waiting.map((d) => (
                     <span
                       key={d.id}
-                      className="inline-flex items-center gap-2 rounded-pill border border-hairline bg-white/[0.02] px-3 py-1.5 text-[12.5px] text-ink-3"
+                      className="inline-flex items-center gap-2 rounded-pill border border-hairline bg-ink/[0.02] px-3 py-1.5 text-[12.5px] text-ink-3"
                     >
                       <span className="h-1.5 w-1.5 rounded-full" style={{ background: d.colour }} aria-hidden />
                       {d.name}

@@ -36,7 +36,7 @@ export function Avatar({
         height: size,
         fontSize: Math.max(10, size * 0.36),
         background: `linear-gradient(140deg, ${colour}, ${colour}99)`,
-        boxShadow: ring ? `0 0 0 2px ${ring}, 0 0 0 4px rgba(0,0,0,0.35)` : `inset 0 0 0 1px rgba(255,255,255,0.14)`,
+        boxShadow: ring ? `0 0 0 2px ${ring}, 0 0 0 4px rgba(0,0,0,0.35)` : `inset 0 0 0 1px var(--rule)`,
       }}
       aria-hidden
     >
@@ -89,9 +89,9 @@ export function RankBadge({ rank, size = 34 }: { rank: number; size?: number }) 
         width: size,
         height: size,
         fontSize: size * 0.42,
-        background: medal ? `${medal.colour}1F` : 'rgba(255,255,255,0.04)',
-        color: medal ? medal.colour : '#8B8F9E',
-        border: `1px solid ${medal ? `${medal.colour}55` : 'rgba(255,255,255,0.1)'}`,
+        background: medal ? `${medal.colour}1F` : 'rgb(var(--ink-rgb) / 0.04)',
+        color: medal ? medal.colour : 'rgb(var(--ink-3-rgb))',
+        border: `1px solid ${medal ? `${medal.colour}55` : 'rgb(var(--ink-rgb) / 0.1)'}`,
       }}
       title={medal ? `${medal.label} — position ${rank}` : `Position ${rank}`}
     >
@@ -196,7 +196,7 @@ export function Meter({
   const pct = Math.max(0, Math.min(1, value / max));
   return (
     <div
-      className="w-full overflow-hidden rounded-full bg-white/[0.07]"
+      className="w-full overflow-hidden rounded-full bg-ink/[0.07]"
       style={{ height }}
       role="progressbar"
       aria-valuenow={Math.round(pct * 100)}

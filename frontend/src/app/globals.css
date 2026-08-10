@@ -5,22 +5,43 @@
 /*
   Design tokens.
 
-  Colours come from the validated dark categorical palette, checked against this
-  app's surface (#15161C) for lightness band, chroma floor, colour-blind
-  separation, normal-vision separation and 3:1 contrast. Do not substitute hues
-  here without re-running that validation — the slot ORDER is the colour-blind
-  safety mechanism, not decoration.
+  Series/status/medal colours come from the validated dark categorical palette,
+  checked against this app's dark surface (#15161C) for lightness band, chroma
+  floor, colour-blind separation, normal-vision separation and 3:1 contrast. Do
+  not substitute hues here without re-running that validation — the slot ORDER
+  is the colour-blind safety mechanism, not decoration. They are intentionally
+  NOT themed — they read fine on both a light and a dark surface.
+
+  Surface/ink tokens ARE themed. Light is the default (`:root`); dark lives
+  under `:root[data-theme='dark']`, set by ThemeProvider (see lib/theme.tsx)
+  and mirrored to localStorage. --*-rgb variables are space-separated channels
+  so Tailwind's `/opacity` modifiers keep working via `rgb(var(--x) / <alpha>)`.
 */
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  --surface-1: #15161c;
-  --plane: #0b0c10;
-  --text-primary: #ffffff;
-  --text-secondary: #c7c9d4;
-  --text-muted: #8b8f9e;
-  --gridline: #24262f;
-  --baseline: #383a44;
+  --plane-rgb: 246 247 249;
+  --surface: #ffffff;
+  --raised: #ffffff;
+  --overlay: #ffffff;
+  --surface-hover: #eef0f3;
+
+  --ink-rgb: 15 17 21;
+  --ink-2: #454955;
+  --ink-3-rgb: 91 96 107;
+
+  --hairline: rgb(var(--ink-rgb) / 0.08);
+  --hairline-mid: rgb(var(--ink-rgb) / 0.5);
+  --hairline-strong: rgb(var(--ink-rgb) / 0.6);
+  --rule: rgb(var(--ink-rgb) / 0.14);
+
+  --gridline: #e4e6ea;
+  --baseline: #d3d6dc;
+
+  --scrollbar-thumb: rgb(var(--ink-rgb) / 0.14);
+  --scrollbar-thumb-hover: rgb(var(--ink-rgb) / 0.24);
+  --skeleton-a: #eceef1;
+  --skeleton-b: #f8f9fa;
 
   --series-1: #3987e5;
   --series-2: #d95926;
@@ -36,10 +57,37 @@
   --bronze: #cd7f45;
 }
 
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --plane-rgb: 11 12 16;
+  --surface: #15161c;
+  --raised: #1c1e26;
+  --overlay: #242732;
+  --surface-hover: #2c303c;
+
+  --ink-rgb: 255 255 255;
+  --ink-2: #c7c9d4;
+  --ink-3-rgb: 139 143 158;
+
+  --hairline: rgb(var(--ink-rgb) / 0.08);
+  --hairline-mid: rgb(var(--ink-rgb) / 0.5);
+  --hairline-strong: rgb(var(--ink-rgb) / 0.6);
+  --rule: rgb(var(--ink-rgb) / 0.14);
+
+  --gridline: #24262f;
+  --baseline: #383a44;
+
+  --scrollbar-thumb: #2b2e3a;
+  --scrollbar-thumb-hover: #3a3e4d;
+  --skeleton-a: #1c1e26;
+  --skeleton-b: #262935;
+}
+
 html,
 body {
-  background: var(--plane);
-  color: var(--text-primary);
+  background: rgb(var(--plane-rgb));
+  color: rgb(var(--ink-rgb));
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -69,13 +117,13 @@ body {
   background: transparent;
 }
 *::-webkit-scrollbar-thumb {
-  background: #2b2e3a;
+  background: var(--scrollbar-thumb);
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
 *::-webkit-scrollbar-thumb:hover {
-  background: #3a3e4d;
+  background: var(--scrollbar-thumb-hover);
   background-clip: content-box;
 }
 
@@ -108,6 +156,6 @@ body {
     @apply text-[11px] font-semibold uppercase tracking-[0.09em] text-ink-3;
   }
   .skeleton {
-    @apply rounded-md bg-[linear-gradient(90deg,#1C1E26_0px,#262935_120px,#1C1E26_240px)] bg-[length:400px_100%] animate-shimmer;
+    @apply rounded-md bg-[linear-gradient(90deg,var(--skeleton-a)_0px,var(--skeleton-b)_120px,var(--skeleton-a)_240px)] bg-[length:400px_100%] animate-shimmer;
   }
 }

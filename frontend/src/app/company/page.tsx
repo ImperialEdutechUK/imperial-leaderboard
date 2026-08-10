@@ -37,7 +37,7 @@ export default function CompanyPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="mb-7">
-        <div className="inline-flex items-center gap-2 rounded-pill border border-rule bg-white/[0.03] px-3 py-1 text-[11px] font-semibold text-ink-2">
+        <div className="inline-flex items-center gap-2 rounded-pill border border-rule bg-ink/[0.03] px-3 py-1 text-[11px] font-semibold text-ink-2">
           <Building2 size={12} /> Department vs department
         </div>
         <h1 className="mt-3 text-[28px] font-black leading-tight tracking-tight text-ink">The company table</h1>
@@ -97,7 +97,7 @@ export default function CompanyPage() {
               </thead>
               <tbody>
                 {withData.map((d: any) => (
-                  <tr key={d.department.id} className="border-b border-hairline/60 last:border-0 hover:bg-white/[0.025]">
+                  <tr key={d.department.id} className="border-b border-hairline-strong last:border-0 hover:bg-ink/[0.025]">
                     <td className="px-4 py-3">
                       <RankBadge rank={d.rank} size={28} />
                     </td>
@@ -140,7 +140,7 @@ export default function CompanyPage() {
                   <Link
                     key={d.department.id}
                     href={`/d/${d.department.slug}`}
-                    className="inline-flex items-center gap-2 rounded-pill border border-hairline bg-white/[0.02] px-3 py-1.5 text-[12.5px] text-ink-3 hover:text-ink-2"
+                    className="inline-flex items-center gap-2 rounded-pill border border-hairline bg-ink/[0.02] px-3 py-1.5 text-[12.5px] text-ink-3 hover:text-ink-2"
                   >
                     <span className="h-1.5 w-1.5 rounded-full" style={{ background: d.department.colour }} aria-hidden />
                     {d.department.name}

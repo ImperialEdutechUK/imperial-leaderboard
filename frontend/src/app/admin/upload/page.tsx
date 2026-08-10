@@ -370,7 +370,7 @@ export default function UploadPage() {
                       <tr
                         key={i}
                         className={cx(
-                          'border-b border-hairline/60 last:border-0',
+                          'border-b border-hairline-strong last:border-0',
                           r.matchMethod === 'FUZZY' && 'bg-warning/[0.04]',
                           r.matchMethod === 'NONE' && 'bg-s1/[0.04]',
                         )}

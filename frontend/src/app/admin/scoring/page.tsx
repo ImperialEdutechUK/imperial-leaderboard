@@ -338,7 +338,7 @@ export default function ScoringPage() {
                 {preview.map((r) => (
                   <tr
                     key={r.name}
-                    className={cx('border-b border-hairline/60 last:border-0', !r.qualified && 'opacity-50')}
+                    className={cx('border-b border-hairline-strong last:border-0', !r.qualified && 'opacity-50')}
                   >
                     <td className="px-4 py-2.5 font-bold text-ink-3 tnum">{r.qualified ? r.rank : '–'}</td>
                     <td className="px-2 py-2.5 text-ink-2">{r.name}</td>

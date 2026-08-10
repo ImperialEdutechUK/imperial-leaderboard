@@ -49,8 +49,8 @@ export default function WeeksPage() {
         <Card className="overflow-hidden">
           <ul>
             {weeks.map((w: any) => (
-              <li key={w.id} className="border-b border-hairline/60 last:border-0">
-                <Link href={`/admin/weeks/${w.id}`} className="flex flex-wrap items-center gap-3 px-4 py-3.5 hover:bg-white/[0.025]">
+              <li key={w.id} className="border-b border-hairline-strong last:border-0">
+                <Link href={`/admin/weeks/${w.id}`} className="flex flex-wrap items-center gap-3 px-4 py-3.5 hover:bg-ink/[0.025]">
                   <span className="h-8 w-1 shrink-0 rounded-full" style={{ background: w.department.colour }} aria-hidden />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
