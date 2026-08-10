@@ -257,25 +257,13 @@ employeeRouter.post('/:id/merge', async (req, res, next) => {
 
 employeeRouter.delete('/:id', async (req, res, next) => {
   try {
-    const employee = await prisma.employee.findUnique({
-      where: { id: req.params.id },
-      include: { _count: { select: { stats: true } } },
-    });
+    const employee = await prisma.employee.findUnique({ where: { id: req.params.id } });
     if (!employee) throw notFound('That person is not on the roster.');
     assertDepartmentAccess(req, employee.departmentId);
 
-    if (employee._count.stats > 0) {
-      // Never destroy history by accident.
-      await prisma.employee.update({ where: { id: employee.id }, data: { isActive: false } });
-      return res.json({
-        ok: true,
-        deactivated: true,
-        message: `${employee.fullName} has ${employee._count.stats} weeks of history, so they were deactivated rather than deleted. Their past results remain on the leaderboard.`,
-      });
-    }
-
+    // Cascades to WeekStat, BadgeAward and EmployeeAlias; unlinks Prize rows.
     await prisma.employee.delete({ where: { id: employee.id } });
-    res.json({ ok: true, deactivated: false });
+    res.json({ ok: true, message: `${employee.fullName} and all their data were deleted.` });
   } catch (err) {
     next(err);
   }

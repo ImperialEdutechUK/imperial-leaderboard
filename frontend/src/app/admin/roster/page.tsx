@@ -31,6 +31,7 @@ export default function RosterPage() {
   const [editing, setEditing] = useState<any>(null);
   const [aliasText, setAliasText] = useState('');
   const [mergeInto, setMergeInto] = useState('');
+  const [deleting, setDeleting] = useState<any>(null);
 
   useEffect(() => {
     if (!departmentId && user?.department?.id && user.role !== 'ADMIN') setDepartmentId(user.department.id);
@@ -136,6 +137,9 @@ export default function RosterPage() {
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => setEditing(e)}>
                     Manage
+                  </Button>
+                  <Button variant="danger" size="sm" icon={<Trash2 size={14} />} onClick={() => setDeleting(e)}>
+                    {/* Delete */}
                   </Button>
                 </div>
               </li>
@@ -345,6 +349,38 @@ export default function RosterPage() {
               </div>
             </div>
           </div>
+        )}
+      </Modal>
+
+      {/* Delete */}
+      <Modal
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        title={deleting ? `Delete ${deleting.fullName}?` : ''}
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setDeleting(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              loading={busy}
+              onClick={async () => {
+                await run(() => api(`/api/employees/${deleting.id}`, { method: 'DELETE' }), 'Deleted.');
+                setDeleting(null);
+              }}
+            >
+              Yes, delete
+            </Button>
+          </div>
+        }
+      >
+        {deleting && (
+          <p className="text-[13.5px] leading-relaxed text-ink-2">
+            This permanently deletes {deleting.fullName} from the roster, along with all of their weekly results,
+            badges and name spellings on file. Their lifetime totals and leaderboard history will be gone. This cannot
+            be undone.
+          </p>
         )}
       </Modal>
     </div>
