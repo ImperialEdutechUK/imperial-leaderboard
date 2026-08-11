@@ -60,28 +60,28 @@ export default function HomePage() {
           <StatTile
             label="Departments live"
             value={formatNumber(live.length)}
-            sub={`of ${summary.data.departments} set up`}
+            sub={`Of ${summary.data.departments} Set up`}
             icon="Building2"
             accent="#3987E5"
           />
           <StatTile
             label="People tracked"
             value={formatNumber(summary.data.employees)}
-            sub="across all departments"
+            sub="Across all departments"
             icon="Users"
             accent="#9085E9"
           />
           <StatTile
             label="Hours logged"
             value={`${formatNumber(Math.round(summary.data.totalSeconds / 3600))}h`}
-            sub="all published weeks"
+            sub="All published weeks"
             icon="Timer"
             accent="#199E70"
           />
           <StatTile
             label="Average activity"
             value={`${summary.data.avgActivity}%`}
-            sub="company-wide mean"
+            sub="Company-wide mean"
             icon="Target"
             accent="#C98500"
           />
