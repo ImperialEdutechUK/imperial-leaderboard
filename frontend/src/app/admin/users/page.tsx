@@ -18,10 +18,12 @@ export default function UsersPage() {
 
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'MANAGER', departmentId: '' });
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [departmentError, setDepartmentError] = useState<string | null>(null);
 
   async function create() {
     setMsg(null);
     setPasswordError(null);
+    setDepartmentError(null);
 
     const password = form.password;
     const passwordIsValid =
@@ -34,6 +36,11 @@ export default function UsersPage() {
       setPasswordError(
         'At least 10 characters with an uppercase letter, a lowercase letter and a number. They will be asked to change it on first sign-in.',
       );
+      return;
+    }
+
+    if (form.role === 'MANAGER' && !form.departmentId) {
+      setDepartmentError('Managers must be assigned to a department.');
       return;
     }
 
@@ -138,7 +145,16 @@ export default function UsersPage() {
             <Button variant="ghost" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={create} loading={busy} disabled={!form.name || !form.email || form.password.length < 10}>
+            <Button
+              onClick={create}
+              loading={busy}
+              disabled={
+                !form.name ||
+                !form.email ||
+                form.password.length < 10 ||
+                (form.role === 'MANAGER' && !form.departmentId)
+              }
+            >
               Create account
             </Button>
           </div>
@@ -170,8 +186,18 @@ export default function UsersPage() {
               <option value="ADMIN">Administrator — every department</option>
             </Select>
           </Field>
-          <Field label="Department" hint={form.role === 'ADMIN' ? 'Optional for administrators.' : 'Required for managers.'}>
-            <Select value={form.departmentId} onChange={(e) => setForm({ ...form, departmentId: e.target.value })}>
+          <Field
+            label="Department"
+            hint={form.role === 'ADMIN' ? 'Optional for administrators.' : 'Required for managers.'}
+            error={departmentError}
+          >
+            <Select
+              value={form.departmentId}
+              onChange={(e) => {
+                setForm({ ...form, departmentId: e.target.value });
+                setDepartmentError(null);
+              }}
+            >
               <option value="">Choose…</option>
               {(departments.data?.departments ?? []).map((d: any) => (
                 <option key={d.id} value={d.id}>
