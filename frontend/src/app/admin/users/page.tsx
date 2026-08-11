@@ -17,10 +17,27 @@ export default function UsersPage() {
   const [msg, setMsg] = useState<{ tone: 'good' | 'critical'; text: string } | null>(null);
 
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'MANAGER', departmentId: '' });
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   async function create() {
-    setBusy(true);
     setMsg(null);
+    setPasswordError(null);
+
+    const password = form.password;
+    const passwordIsValid =
+      password.length >= 10 &&
+      /[A-Z]/.test(password) &&
+      /[a-z]/.test(password) &&
+      /[0-9]/.test(password);
+
+    if (!passwordIsValid) {
+      setPasswordError(
+        'At least 10 characters with an uppercase letter, a lowercase letter and a number. They will be asked to change it on first sign-in.',
+      );
+      return;
+    }
+
+    setBusy(true);
     try {
       await api('/api/users', { method: 'POST', body: { ...form, departmentId: form.departmentId || null } });
       setMsg({ tone: 'good', text: `${form.name} can now sign in. They will be asked to change the password.` });
@@ -137,8 +154,15 @@ export default function UsersPage() {
           <Field
             label="Temporary password"
             hint="At least 10 characters with an uppercase letter, a lowercase letter and a number. They will be asked to change it on first sign-in."
+            error={passwordError}
           >
-            <Input value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+            <Input
+              value={form.password}
+              onChange={(e) => {
+                setForm({ ...form, password: e.target.value });
+                setPasswordError(null);
+              }}
+            />
           </Field>
           <Field label="Role">
             <Select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
