@@ -97,12 +97,26 @@ authRouter.get('/me', requireAuth, async (req, res, next) => {
   }
 });
 
+/** Same rationale as loginLimiter — this endpoint also takes a password guess. */
+const changePasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: {
+      code: 'RATE_LIMITED',
+      message: 'Too many attempts. Please wait 15 minutes and try again.',
+    },
+  },
+});
+
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1),
   newPassword: z.string().min(1),
 });
 
-authRouter.post('/change-password', requireAuth, async (req, res, next) => {
+authRouter.post('/change-password', requireAuth, changePasswordLimiter, async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = changePasswordSchema.parse(req.body);
 

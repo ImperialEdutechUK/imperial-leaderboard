@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { randomBytes } from 'crypto';
 
 function required(name: string, fallback?: string): string {
   const v = process.env[name] ?? fallback;
@@ -18,13 +19,24 @@ export const config = {
 
   jwtSecret: (() => {
     const secret = process.env.JWT_SECRET ?? '';
-    if (isProd && (secret.length < 32 || secret.includes('change-me'))) {
+    // Checked unconditionally, not just when NODE_ENV === 'production': some
+    // hosts (Railway included) don't set NODE_ENV unless you configure it
+    // yourself, and a gate keyed on that would silently let a deployed,
+    // internet-facing service fall back to a hardcoded, publicly-known
+    // secret, letting anyone forge a valid manager/admin token.
+    if (secret.length < 32 || secret.includes('change-me')) {
+      if (!isProd && !secret) {
+        // Only local/dev runs (no NODE_ENV=production, no secret configured
+        // at all) get a fallback, and it's unique per-process so restarting
+        // still invalidates old tokens rather than reusing one fixed string.
+        return randomBytes(48).toString('base64');
+      }
       throw new Error(
-        'JWT_SECRET must be set to a strong random value (>= 32 chars) in production. ' +
+        'JWT_SECRET must be set to a strong random value (>= 32 chars). ' +
           'Generate one with: openssl rand -base64 48',
       );
     }
-    return secret || 'dev-only-insecure-secret-do-not-use-in-production';
+    return secret;
   })(),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '8h',
 

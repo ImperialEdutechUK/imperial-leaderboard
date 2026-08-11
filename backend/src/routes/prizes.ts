@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
-import { badRequest, notFound } from '../lib/errors';
+import { badRequest, forbidden, notFound } from '../lib/errors';
 import { assertDepartmentAccess, departmentScope, requireAuth } from '../middleware/auth';
 import { getMonthlyStandings, listMonths } from '../services/leaderboard';
 import { monthLabel } from '../lib/period';
@@ -118,22 +118,30 @@ prizeRouter.post('/', async (req, res, next) => {
       include: { employee: { select: { fullName: true, slug: true } } },
     });
 
-    // Give the winner the Monthly Champion badge.
+    // Give the winner the Monthly Champion badge. Postgres treats NULL weekId
+    // values as distinct from one another, so the DB's unique constraint on
+    // (employeeId, badgeId, weekId) does not actually stop two concurrent
+    // awards of this lifetime badge from both landing — lock per
+    // employee+badge so the check-then-create below can't race (e.g. two
+    // admins confirming the same champion at once).
     if (body.periodType === 'MONTH') {
       const badge = await prisma.badgeDefinition.findUnique({ where: { key: 'MONTHLY_CHAMPION' } });
       if (badge) {
-        const existing = await prisma.badgeAward.findFirst({
-          where: { employeeId: body.employeeId, badgeId: badge.id, weekId: null },
-        });
-        if (!existing) {
-          await prisma.badgeAward.create({
-            data: {
-              employeeId: body.employeeId,
-              badgeId: badge.id,
-              context: { periodKey: body.periodKey, pointsTotal },
-            },
+        await prisma.$transaction(async (tx) => {
+          await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${body.employeeId + ':' + badge.id})::bigint)`;
+          const existing = await tx.badgeAward.findFirst({
+            where: { employeeId: body.employeeId, badgeId: badge.id, weekId: null },
           });
-        }
+          if (!existing) {
+            await tx.badgeAward.create({
+              data: {
+                employeeId: body.employeeId,
+                badgeId: badge.id,
+                context: { periodKey: body.periodKey, pointsTotal },
+              },
+            });
+          }
+        });
       }
     }
 
@@ -158,7 +166,15 @@ prizeRouter.delete('/:id', async (req, res, next) => {
   try {
     const prize = await prisma.prize.findUnique({ where: { id: req.params.id } });
     if (!prize) throw notFound('That prize does not exist.');
-    if (prize.departmentId) assertDepartmentAccess(req, prize.departmentId);
+    // Fail closed: a department-scoped prize is checked normally; a
+    // company-wide prize (no departmentId — not creatable today, but the
+    // schema allows it) can only be deleted by an admin rather than skipping
+    // the check entirely.
+    if (prize.departmentId) {
+      assertDepartmentAccess(req, prize.departmentId);
+    } else if (req.user!.role !== 'ADMIN') {
+      throw forbidden('Only an administrator can delete a company-wide prize.');
+    }
 
     await prisma.prize.delete({ where: { id: prize.id } });
     res.json({ ok: true });

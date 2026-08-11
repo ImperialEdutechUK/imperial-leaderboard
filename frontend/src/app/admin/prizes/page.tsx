@@ -81,13 +81,15 @@ export default function PrizesPage() {
       )}
 
       <div className="mb-5 flex flex-wrap gap-3">
-        <Select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)} className="w-[230px]">
-          {(departments.data?.departments ?? []).map((d: any) => (
-            <option key={d.id} value={d.id}>
-              {d.name}
-            </option>
-          ))}
-        </Select>
+        {user?.role === 'ADMIN' && (
+          <Select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)} className="w-[230px]">
+            {(departments.data?.departments ?? []).map((d: any) => (
+              <option key={d.id} value={d.id}>
+                {d.name}
+              </option>
+            ))}
+          </Select>
+        )}
         {(candidates.data?.months?.length ?? 0) > 0 && (
           <Select value={month || candidates.data?.monthKey || ''} onChange={(e) => setMonth(e.target.value)} className="w-[180px]">
             {candidates.data.months.map((m: any) => (

@@ -120,6 +120,14 @@ function rowsFromXlsx(buffer: Buffer): Record<string, string>[] {
   return out;
 }
 
+/**
+ * A weekly report has, at most, a few hundred employee rows. A file that
+ * expands to far more than that once parsed is either corrupt or crafted to
+ * blow up memory (e.g. a highly-compressible XLSX) — reject it outright
+ * rather than let it flow into name-matching/scoring, which are O(rows).
+ */
+const MAX_REPORT_ROWS = 20_000;
+
 export function parseTabularReport(
   buffer: Buffer,
   kind: 'CSV' | 'XLSX',
@@ -130,6 +138,12 @@ export function parseTabularReport(
 
   if (rows.length === 0) {
     throw Object.assign(new Error('No data rows found in this file.'), { code: 'NO_ROWS' });
+  }
+  if (rows.length > MAX_REPORT_ROWS) {
+    throw Object.assign(
+      new Error(`This file has ${rows.length} rows, which is far more than a weekly report should contain.`),
+      { code: 'TOO_MANY_ROWS' },
+    );
   }
 
   const headers = Object.keys(rows[0]);

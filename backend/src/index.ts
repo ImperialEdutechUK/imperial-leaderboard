@@ -42,6 +42,15 @@ armIdleDisconnect();
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
+// Preview deployments get "<project>-<branch-or-hash>[-<team>].vercel.app" —
+// derive the allowed project slug(s) from the configured production
+// origin(s) so only *this* project's previews are trusted, not any of the
+// millions of unrelated projects sharing the public vercel.app domain.
+const vercelProjectSlugs = config.corsOrigins
+  .filter((o) => /^https:\/\/[a-z0-9-]+\.vercel\.app$/.test(o))
+  .map((o) => o.replace(/^https:\/\//, '').replace(/\.vercel\.app$/, ''))
+  .map((slug) => slug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
 app.use(
   cors({
     origin(origin, callback) {
@@ -49,11 +58,12 @@ app.use(
       if (!origin) return callback(null, true);
       if (config.corsOrigins.includes(origin)) return callback(null, true);
 
-      // Allow Vercel preview deployments for the configured projects.
-      const isVercelPreview = /^https:\/\/[a-z0-9-]+\.vercel\.app$/.test(origin);
-      if (isVercelPreview && config.corsOrigins.some((o) => o.endsWith('.vercel.app'))) {
-        return callback(null, true);
-      }
+      // Allow preview deployments of the same configured project only, e.g.
+      // https://imperial-leaderboard-git-feature-x-team.vercel.app.
+      const isOwnPreview = vercelProjectSlugs.some((slug) =>
+        new RegExp(`^https:\\/\\/${slug}-[a-z0-9-]+\\.vercel\\.app$`).test(origin),
+      );
+      if (isOwnPreview) return callback(null, true);
 
       return callback(new Error(`Origin ${origin} is not allowed by CORS.`));
     },
