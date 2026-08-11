@@ -8,6 +8,7 @@
 
 import { Router } from 'express';
 import multer from 'multer';
+import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { config } from '../config';
 import { prisma } from '../lib/prisma';
@@ -24,6 +25,21 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: config.maxUploadBytes, files: 1 },
 });
+
+// Each of these does real work — file parsing, fuzzy name matching, or a
+// scored department-wide write — so cap them well below the generous global
+// ceiling to stop one compromised or careless account from tying up the
+// single Node process for everyone.
+const importLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: { code: 'RATE_LIMITED', message: 'Too many import requests. Please slow down and try again shortly.' },
+  },
+});
+importRouter.use(importLimiter);
 
 /**
  * POST /api/imports/preview

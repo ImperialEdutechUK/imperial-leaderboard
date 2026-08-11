@@ -36,7 +36,7 @@
     "multer": "^1.4.5-lts.1",
     "papaparse": "^5.4.1",
     "pdfjs-dist": "4.2.67",
-    "xlsx": "^0.18.5",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "zod": "^3.23.8"
   },
   "devDependencies": {

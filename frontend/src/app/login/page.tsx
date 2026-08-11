@@ -12,7 +12,12 @@ function LoginForm() {
   const { signIn } = useAuth();
   const router = useRouter();
   const search = useSearchParams();
-  const next = search.get('next') ?? '/admin';
+  // Only ever follow an internal, relative path. A raw query param here is
+  // attacker-controlled — without this check a crafted "?next=" link could
+  // send a manager who just authenticated straight to an external phishing
+  // page immediately after login.
+  const rawNext = search.get('next');
+  const next = rawNext && /^\/(?!\/|\\)/.test(rawNext) ? rawNext : '/admin';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

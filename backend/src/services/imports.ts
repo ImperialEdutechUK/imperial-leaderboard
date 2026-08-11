@@ -14,6 +14,7 @@
  */
 
 import type { PrismaClient, Prisma } from '@prisma/client';
+import { Prisma as PrismaRuntime } from '@prisma/client';
 import { conflict, badRequest, notFound } from '../lib/errors';
 import { normaliseName, slugify, toDisplayName } from '../lib/text';
 import {
@@ -43,7 +44,7 @@ export function pickAvatarColour(seed: string): string {
 
 /** Reads the effective scoring config for a department, falling back to global. */
 export async function getScoringConfig(
-  prisma: PrismaClient,
+  prisma: PrismaClient | Prisma.TransactionClient,
   departmentId: string,
   targetHoursOverride?: number | null,
 ): Promise<ScoringConfig> {
@@ -297,23 +298,54 @@ export async function commitWeek(prisma: PrismaClient, input: CommitInput) {
   const usable = input.rows.filter((r) => !r.skip);
   if (usable.length === 0) throw badRequest('There are no rows to import.');
 
-  const existing = await prisma.week.findUnique({
-    where: { departmentId_startDate: { departmentId: input.departmentId, startDate: start } },
-  });
-  if (existing && !input.replace) {
-    throw conflict(
-      `A week starting ${toIso(start)} already exists for this department (currently ${existing.status.toLowerCase()}). ` +
-        'Re-import with "replace" enabled to overwrite it.',
-      { weekId: existing.id, status: existing.status },
-    );
-  }
-
   const scoring = await getScoringConfig(prisma, input.departmentId, input.targetHoursOverride);
   const { isoYear, isoWeek } = isoWeekOf(start);
 
   return prisma.$transaction(
     async (tx) => {
-      // ── 1. Resolve every row to a real employee id ────────────────────────
+      // Serialize every commit/recalculation for this department. Two managers
+      // importing at the same time (or a re-import racing a retroactive
+      // recalculation) would otherwise both read "week doesn't exist yet" or
+      // both read a stale set of WeekStat rows and clobber each other's
+      // writes. The lock is held for the lifetime of this transaction and
+      // released automatically on commit/rollback.
+      await departmentCommitLock(tx, input.departmentId);
+
+      const existing = await tx.week.findUnique({
+        where: { departmentId_startDate: { departmentId: input.departmentId, startDate: start } },
+      });
+      if (existing && !input.replace) {
+        throw conflict(
+          `A week starting ${toIso(start)} already exists for this department (currently ${existing.status.toLowerCase()}). ` +
+            'Re-import with "replace" enabled to overwrite it.',
+          { weekId: existing.id, status: existing.status },
+        );
+      }
+
+      return performCommit(tx, input, existing, scoring, start, end, isoYear, isoWeek);
+    },
+    { timeout: 30_000, maxWait: 10_000 },
+  );
+}
+
+/** Serializes all writers for a department behind a transaction-scoped Postgres advisory lock. */
+async function departmentCommitLock(tx: Prisma.TransactionClient, departmentId: string): Promise<void> {
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${departmentId})::bigint)`;
+}
+
+async function performCommit(
+  tx: Prisma.TransactionClient,
+  input: CommitInput,
+  existing: { id: string } | null,
+  scoring: ScoringConfig,
+  start: Date,
+  end: Date,
+  isoYear: number,
+  isoWeek: number,
+) {
+  const usable = input.rows.filter((r) => !r.skip);
+  {
+    // ── 1. Resolve every row to a real employee id ────────────────────────
       const resolved: { employeeId: string; row: CommitRow }[] = [];
 
       for (const row of usable) {
@@ -352,16 +384,37 @@ export async function commitWeek(prisma: PrismaClient, input: CommitInput) {
             if (await tx.employee.findUnique({ where: { slug } })) {
               slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;
             }
-            const created = await tx.employee.create({
-              data: {
-                fullName,
-                displayName: toDisplayName(fullName),
-                slug,
-                departmentId: input.departmentId,
-                avatarColour: pickAvatarColour(fullName),
-              },
-            });
-            employeeId = created.id;
+            try {
+              const created = await tx.employee.create({
+                data: {
+                  fullName,
+                  displayName: toDisplayName(fullName),
+                  slug,
+                  departmentId: input.departmentId,
+                  avatarColour: pickAvatarColour(fullName),
+                },
+              });
+              employeeId = created.id;
+            } catch (err) {
+              // The department is locked for the whole commit, so this can only be
+              // the globally-unique slug colliding with a same-named person created
+              // in a *different* department in the same instant. Retry once with a
+              // fresh random suffix instead of failing the whole import.
+              if (err instanceof PrismaRuntime.PrismaClientKnownRequestError && err.code === 'P2002') {
+                const created = await tx.employee.create({
+                  data: {
+                    fullName,
+                    displayName: toDisplayName(fullName),
+                    slug: `${slug}-${Math.random().toString(36).slice(2, 6)}`,
+                    departmentId: input.departmentId,
+                    avatarColour: pickAvatarColour(fullName),
+                  },
+                });
+                employeeId = created.id;
+              } else {
+                throw err;
+              }
+            }
           }
         }
 
@@ -563,41 +616,58 @@ export async function commitWeek(prisma: PrismaClient, input: CommitInput) {
         badgesAwarded: drafts.length,
         createdEmployees: usable.filter((r) => !r.employeeId).length,
       };
-    },
-    { timeout: 30_000, maxWait: 10_000 },
-  );
+  }
 }
 
 /**
  * Re-scores an existing week in place. Used after a manager edits the scoring
  * settings and asks to apply them retroactively, or after fixing a bad row.
+ *
+ * Runs under the same per-department advisory lock as commitWeek, and reads
+ * the week + its stats only *after* acquiring that lock — otherwise two
+ * concurrent recalculations (or a recalculation racing a re-import) could
+ * each work off a stale snapshot and silently overwrite one another's edit.
  */
 export async function recalculateWeek(prisma: PrismaClient, weekId: string) {
-  const week = await prisma.week.findUnique({
-    where: { id: weekId },
-    include: { stats: true },
-  });
-  if (!week) throw notFound('That week does not exist.');
+  const weekMeta = await prisma.week.findUnique({ where: { id: weekId }, select: { departmentId: true } });
+  if (!weekMeta) throw notFound('That week does not exist.');
 
-  return commitWeek(prisma, {
-    departmentId: week.departmentId,
-    startDate: toIso(week.startDate),
-    endDate: toIso(week.endDate),
-    sourceType: week.sourceType,
-    sourceFile: week.sourceFile,
-    targetHoursOverride: week.targetHoursOverride,
-    note: week.note,
-    printedTotalSeconds: week.reportTotalSeconds,
-    printedAvgActivity: week.reportAvgActivity,
-    parseWarnings: week.parseWarnings,
-    uploadedById: week.uploadedById,
-    replace: true,
-    rows: week.stats.map((s) => ({
-      rawName: s.rawName,
-      seconds: s.seconds,
-      activityPct: s.activityPct,
-      daysWorked: s.daysWorked,
-      employeeId: s.employeeId,
-    })),
-  });
+  return prisma.$transaction(
+    async (tx) => {
+      await departmentCommitLock(tx, weekMeta.departmentId);
+
+      const week = await tx.week.findUnique({ where: { id: weekId }, include: { stats: true } });
+      if (!week) throw notFound('That week does not exist.');
+
+      const scoring = await getScoringConfig(tx, week.departmentId, week.targetHoursOverride);
+      const start = startOfIsoWeek(utcDate(toIso(week.startDate)));
+      const end = week.endDate;
+      const { isoYear, isoWeek } = isoWeekOf(start);
+
+      const input: CommitInput = {
+        departmentId: week.departmentId,
+        startDate: toIso(week.startDate),
+        endDate: toIso(week.endDate),
+        sourceType: week.sourceType,
+        sourceFile: week.sourceFile,
+        targetHoursOverride: week.targetHoursOverride,
+        note: week.note,
+        printedTotalSeconds: week.reportTotalSeconds,
+        printedAvgActivity: week.reportAvgActivity,
+        parseWarnings: week.parseWarnings,
+        uploadedById: week.uploadedById,
+        replace: true,
+        rows: week.stats.map((s) => ({
+          rawName: s.rawName,
+          seconds: s.seconds,
+          activityPct: s.activityPct,
+          daysWorked: s.daysWorked,
+          employeeId: s.employeeId,
+        })),
+      };
+
+      return performCommit(tx, input, week, scoring, start, end, isoYear, isoWeek);
+    },
+    { timeout: 30_000, maxWait: 10_000 },
+  );
 }
