@@ -8,12 +8,18 @@ import { requireAuth } from '../middleware/auth';
 
 export const authRouter = Router();
 
-/** Slows down credential stuffing without locking out a manager who fat-fingers once. */
+/**
+ * Slows down credential stuffing without locking out a manager who fat-fingers
+ * once. Only *failed* attempts count — a successful sign-in doesn't spend the
+ * budget, so switching between accounts or logging in several times in a row
+ * never trips this on its own.
+ */
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
+  skipSuccessfulRequests: true,
   message: {
     error: {
       code: 'RATE_LIMITED',
@@ -103,6 +109,7 @@ const changePasswordLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
+  skipSuccessfulRequests: true,
   message: {
     error: {
       code: 'RATE_LIMITED',
