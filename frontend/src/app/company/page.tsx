@@ -58,13 +58,13 @@ export default function CompanyPage() {
             <StatTile
               label="Reporting"
               value={`${data.company.departmentsReporting}/${data.company.departmentsTotal}`}
-              sub="departments this week"
+              sub="Departments this week"
               icon="Building2"
               accent="#3987E5"
             />
-            <StatTile label="People" value={formatNumber(data.company.headcount)} sub="tracked this week" icon="Users" accent="#9085E9" />
-            <StatTile label="Hours" value={data.company.totalHoursLabel} sub="company total" icon="Timer" accent="#199E70" />
-            <StatTile label="Activity" value={`${data.company.avgActivity}%`} sub="weighted mean" icon="Target" accent="#C98500" />
+            <StatTile label="People" value={formatNumber(data.company.headcount)} sub="Tracked this week" icon="Users" accent="#9085E9" />
+            <StatTile label="Hours" value={data.company.totalHoursLabel} sub="Company total" icon="Timer" accent="#199E70" />
+            <StatTile label="Activity" value={`${data.company.avgActivity}%`} sub="Weighted mean" icon="Target" accent="#C98500" />
           </section>
 
           <Card className="mb-6 p-5">
