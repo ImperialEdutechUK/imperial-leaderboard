@@ -40,9 +40,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
+  const isAdminOnlyPath = ADMIN_ONLY.some((n) => pathname?.startsWith(n.href));
+
   useEffect(() => {
     if (!loading && !user) router.replace(`/login?next=${encodeURIComponent(pathname ?? '/admin')}`);
   }, [loading, user, router, pathname]);
+
+  useEffect(() => {
+    // A stale ?next= from before a role change (e.g. a manager deactivated/reactivated
+    // while a login redirect was pending) must not land a non-admin on an admin-only page.
+    if (!loading && user && user.role !== 'ADMIN' && isAdminOnlyPath) router.replace('/admin');
+  }, [loading, user, isAdminOnlyPath, router]);
 
   useEffect(() => {
     setOpen(false);
@@ -56,6 +64,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
   if (!user) return null;
+  if (user.role !== 'ADMIN' && isAdminOnlyPath) return null;
 
   const items = user.role === 'ADMIN' ? [...NAV, ...ADMIN_ONLY] : NAV;
 
